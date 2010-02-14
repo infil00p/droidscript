@@ -23,9 +23,9 @@ On startup, the app reads a JavaScript file:
 
 Steps if using the emulator:
 1) Create an SD card image with: mksdcard 512M sdcard.iso
-2) Launch emulator with script ./emulator.sh
+2) Launch emulator with script: ./emulator.sh
 
-Copy DroidScriptMainActivity.js to device with script ./copyjs.sh
+Copy DroidScriptMainActivity.js to device with script: ./copyjs.sh
 
 Import project into Eclipse, compile and run on emulator or device.
 If you don't want to compile, DroidScript.apk is on GitHub in bin folder.
