@@ -29,6 +29,7 @@ Copy DroidScriptMainActivity.js to device with script ./copyjs.sh
 
 Import project into Eclipse, compile and run on emulator or device.
 If you don't want to compile, DroidScript.apk is on GitHub in bin folder.
+Install on device with: adb install -r DroidScript.apk
 
 Again, everything is very experimental and unfinished at this stage.
 
