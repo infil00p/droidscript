@@ -44,39 +44,79 @@ function onCreate(icicle)
     var LayoutParams = Packages.android.view.ViewGroup.LayoutParams;
     var View = Packages.android.view.View;
     var Gravity = Packages.android.view.Gravity;
+    var Intent = Packages.android.content.Intent;
     
-    var view = new Widget.TextView(Activity);
-    var text = 'fsdfsdfsdf2010-01-31 Hello Android!\nThis is JavaScript in action!';
-    text += 'The web is late bound';
-    text += 'Apps are early bound';
-    text += 'Web pages are updated frequently';
-    text += 'Apps are updated infrequently';
-    text += 'Web pages are dynamic';
-    text += 'Apps are static';
-    view.setText(text);
+    var script = ''
+	    + 'var Widget = Packages.android.widget;\n'
+		+ 'var Gravity = Packages.android.view.Gravity;\n'
+		+ 'function onCreate(icicle) {\n'
+    		+ '    var text = "The web is late bound.\\n"\n'
+        + '        + "Apps are early bound.\\n"\n'
+        + '        + "The web is late bound.\\n"\n'
+        + '        + "Apps are updated infrequently.\\n"\n'
+        + '        + "The web updated frequently.\\n"\n'
+        + '        + "JavaScript for apps means dynamics.\\n";\n'
+        + '    var editor = new Widget.EditText(Activity);\n'
+        + '    editor.setGravity(Gravity.TOP);\n'
+        + '    editor.setText(text);\n'
+        + '    Activity.setContentView(editor); }\n\n'
+        + '    Widget.Toast.makeText(Activity,\n'
+        + '        "Hello World! Tamejfan!",\n'
+        + '        Widget.Toast.LENGTH_SHORT).show();\n'
     
     var editor = new Widget.EditText(Activity);
-    editor.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
-    //editor.setLines(10);
+    editor.setLayoutParams(new Widget.LinearLayout.LayoutParams(
+    		LayoutParams.FILL_PARENT, 
+    		LayoutParams.WRAP_CONTENT, 
+    		1));
     editor.setGravity(Gravity.TOP);
     editor.setVerticalScrollBarEnabled(true);
     editor.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
     editor.setScrollContainer(true);
-    editor.setText(text);
+    editor.setText(script);
+    
+    var button = new Widget.Button(Activity);
+    button.setLayoutParams(new LayoutParams(
+    		LayoutParams.FILL_PARENT, 
+    		LayoutParams.WRAP_CONTENT));
+    button.setText("Evaluate");
+    button.setOnClickListener(function (view) { 
+        Activity.eval(editor.getText().toString()); })  
         
-    Activity.setContentView(editor);
+    var button2 = new Widget.Button(Activity);
+    button2.setLayoutParams(new LayoutParams(
+    		LayoutParams.FILL_PARENT, 
+    		LayoutParams.WRAP_CONTENT));
+    button2.setText("Run as Activity");
+    button2.setOnClickListener(function (view) { 
+		var intent = new Intent();
+	    intent.setClassName(Activity, "comikit.droidscript.DroidScriptActivity");
+	    intent.putExtra("Script", editor.getText().toString());
+	    Activity.startActivity(intent); })  
+        
+    var layout = new Widget.LinearLayout(Activity);
+    layout.setOrientation(Widget.LinearLayout.VERTICAL);
+    layout.setLayoutParams(new LayoutParams(
+    		LayoutParams.FILL_PARENT, 
+    		LayoutParams.FILL_PARENT));
+
+    layout.addView(editor);
+    layout.addView(button);
+    layout.addView(button2);
+
+    Activity.setContentView(layout);
 }
 
 function onResume()
 {
 	print("onResume - starting server");
-	startServer();
+	//startServer();
 }
 
 function onPause()
 {
 	print("onPause - stopping server");
-	stopServer();
+	//stopServer();
 }
 
 function onCreateOptionsMenu(menu)
@@ -96,7 +136,7 @@ function onPrepareOptionsMenu(menu)
 	return true;
 }
 
-// "Satsa på onlineteknolgi istället för offlineteknologi" Göran on byggverktyg 100201
+// "Satsa på onlineteknolgi istället för offlineteknologi" Göran on byggverktyg 20100201
 
 function onOptionsItemSelected(item)
 {
@@ -106,9 +146,9 @@ function onOptionsItemSelected(item)
 	
 	if ((Menu.FIRST + 10) == item.getItemId()) 
 	{
-		var intent = new Intent();
-	    intent.setClassName(Activity, "comikit.droidscript.RhinoDroidWorkspace");
-	    Activity.startActivity(intent); 
+//		var intent = new Intent();
+//	    intent.setClassName(Activity, "comikit.droidscript.RhinoDroidWorkspace");
+//	    Activity.startActivity(intent); 
 	}
 	else
 	if ((Menu.FIRST + 11) == item.getItemId()) 

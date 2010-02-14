@@ -11,11 +11,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".RhinoDroidWorkspace"
-                  android:label="RhinoDroidWorkspace">
-        </activity>
-        <activity android:name=".DroidScriptLiveActivity"
-                  android:label="DroidScriptLive">
+        <activity android:name=".DroidScriptActivity"
+                  android:label="DroidScriptActivity">
         </activity>
     </application>
     <uses-sdk android:minSdkVersion="5" />

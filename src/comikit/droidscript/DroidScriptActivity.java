@@ -3,6 +3,7 @@ package comikit.droidscript;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -41,14 +42,20 @@ public class DroidScriptActivity extends Activity
     {
         super.onCreate(savedInstanceState);
         // Read in the script given in the intent.
-        Intent intent = this.getIntent();
+        Intent intent = getIntent();
         if (null != intent)
         {
             String filenameOrUrl = intent.getStringExtra("ScriptName");
+            String script = intent.getStringExtra("Script");
             if (null != filenameOrUrl) 
             {   
                 setScriptFileName(filenameOrUrl);
-                this.openFileOrUrl(filenameOrUrl);
+                openFileOrUrl(filenameOrUrl);
+            }
+            else
+            if (null != script) 
+            {   
+                eval(script);
             }
         }
         interpreter.callJsFunction("onCreate", savedInstanceState);
@@ -132,7 +139,7 @@ public class DroidScriptActivity extends Activity
         if ((Menu.FIRST + 1) == item.getItemId()) 
         {
             // Reload main script.
-            this.openFileOrUrl(scriptFileName);
+            openFileOrUrl(scriptFileName);
         }
         else
         if ((Menu.FIRST + 2) == item.getItemId())
@@ -276,17 +283,31 @@ public class DroidScriptActivity extends Activity
         
         public Object callJsFunction(String funName, Object... args)
         {
-            Object fun = scope.get(funName, scope);
-            if (fun instanceof Function) 
+            try 
             {
-                Log.i("DS", "Calling JsFun " + funName);
-                Function f = (Function) fun;
-                Object result = f.call(cx, scope, scope, args);
-                return Context.toString(result);
+                Object fun = scope.get(funName, scope);
+                if (fun instanceof Function) 
+                {
+                    Log.i("DS", "Calling JsFun " + funName);
+                    Function f = (Function) fun;
+                    Object result = f.call(cx, scope, scope, args);
+                    return Context.toString(result);
+                }
+                else
+                {
+                    Log.i("DS", "Could not find JsFun " + funName);
+                    return null;
+                }
             }
-            else
+            catch (EcmaError error)
             {
-                Log.i("DS", "Could not find JsFun " + funName);
+                error.printStackTrace();
+                Log.i("JavaScript", "Line: " + error.lineNumber() + ": " + error.getLineSource());
+                return null;
+            }
+            catch (Throwable e)
+            {
+                e.printStackTrace();
                 return null;
             }
         }
