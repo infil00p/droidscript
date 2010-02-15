@@ -161,6 +161,11 @@ public class DroidScriptActivity extends Activity
     {
         scriptFileName = fileName;
     }
+    
+    public String getScriptFileName()
+    {
+        return scriptFileName;
+    }
 
 //    public void createOptionsMenuStandardItems(Menu menu)
 //    {

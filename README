@@ -1,9 +1,9 @@
-Copyright (c) 2009 Mikael Kindborg mikael.kindborg@gmail.com
+Copyright (c) 2009-2010 Mikael Kindborg mikael.kindborg@gmail.com
 Licence: MIT
 
 DroidScript - JavaScript for Android! :-)
 
-The project is very unfinished at this stage!
+The project is very unfinished and experimental!
 
 DroidScript (formerly called RhinoDroid) is a JavaScript programming tool for Android.
 It is a tool for building full Android applications.
@@ -19,13 +19,17 @@ But this is not yet complete.
 How To
 
 On startup, the app reads a JavaScript file: 
-/sdcard/droidscript/DroidScriptMainActivity.js
+/sdcard/droidscript/DroidScript.js
+
+If not present, this file, and the demo script Toast.js, are downloaded 
+from GitHub when the app starts.
 
 Steps if using the emulator:
 1) Create an SD card image with: mksdcard 512M sdcard.iso
 2) Launch emulator with script: ./emulator.sh
 
-Copy DroidScriptMainActivity.js to device with script: ./copyjs.sh
+Copy DroidScript.js to device with script: ./copyjs.sh
+(This is only needed if you wish to modify the app.)
 
 Import project into Eclipse, compile and run on emulator or device.
 If you don't want to compile, DroidScript.apk is on GitHub in bin folder.

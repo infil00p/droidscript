@@ -51,7 +51,7 @@ function onCreate(icicle)
     editor.setLayoutParams(new Widget.LinearLayout.LayoutParams(
     		LayoutParams.FILL_PARENT, 
     		LayoutParams.WRAP_CONTENT, 
-            1));
+        1));
     editor.setGravity(Gravity.TOP);
     editor.setVerticalScrollBarEnabled(true);
     editor.setScrollBarStyle(View.SCROLLBARS_OUTSIDE_INSET);
@@ -63,34 +63,49 @@ function onCreate(icicle)
     
     var buttonEval = new Widget.Button(Activity);
     buttonEval.setLayoutParams(new LayoutParams(
-            LayoutParams.FILL_PARENT, 
-            LayoutParams.WRAP_CONTENT));
+        LayoutParams.WRAP_CONTENT, 
+        LayoutParams.WRAP_CONTENT));
     buttonEval.setText("Evaluate");
     buttonEval.setOnClickListener(function () { 
-        Activity.eval(editor.getText().toString()); })  
+        Activity.eval(editor.getText().toString()); });
         
     var buttonRun = new Widget.Button(Activity);
     buttonRun.setLayoutParams(new LayoutParams(
-            LayoutParams.FILL_PARENT, 
-            LayoutParams.WRAP_CONTENT));
+        LayoutParams.WRAP_CONTENT, 
+        LayoutParams.WRAP_CONTENT));
     buttonRun.setText("Run as Activity");
     buttonRun.setOnClickListener(function () { 
         var intent = new Intent();
         intent.setClassName(Activity, "comikit.droidscript.DroidScriptActivity");
         intent.putExtra("Script", editor.getText().toString());
-        Activity.startActivity(intent); })  
-        
-    var layout = new Widget.LinearLayout(Activity);
-    layout.setOrientation(Widget.LinearLayout.VERTICAL);
-    layout.setLayoutParams(new LayoutParams(
-            LayoutParams.FILL_PARENT, 
-            LayoutParams.FILL_PARENT));
+        Activity.startActivity(intent); });
+    
+    var buttonOpen = new Widget.Button(Activity);
+    buttonRun.setLayoutParams(new LayoutParams(
+        LayoutParams.WRAP_CONTENT, 
+        LayoutParams.WRAP_CONTENT));
+    buttonOpen.setText("Open Script");
+    buttonOpen.setOnClickListener(function () { openScript(); });
+    
+    var buttonLayout = new Widget.LinearLayout(Activity);
+    buttonLayout.setOrientation(Widget.LinearLayout.HORIZONTAL);
+    buttonLayout.setLayoutParams(new LayoutParams(
+        LayoutParams.FILL_PARENT, 
+        LayoutParams.WRAP_CONTENT));
+    buttonLayout.addView(buttonOpen);
+    buttonLayout.addView(buttonEval);
+    buttonLayout.addView(buttonRun);
+    
+    var mainLayout = new Widget.LinearLayout(Activity);
+    mainLayout.setOrientation(Widget.LinearLayout.VERTICAL);
+    mainLayout.setLayoutParams(new Widget.LinearLayout.LayoutParams(
+        LayoutParams.FILL_PARENT, 
+        LayoutParams.FILL_PARENT,
+        1));
+    mainLayout.addView(editor);
+    mainLayout.addView(buttonLayout);
 
-    layout.addView(editor);
-    layout.addView(buttonEval);
-    layout.addView(buttonRun);
-
-    Activity.setContentView(layout);
+    Activity.setContentView(mainLayout);
 }
 
 function onResume()
@@ -114,6 +129,7 @@ function onPrepareOptionsMenu(menu)
 {
     menu.clear();
     menu.add(Menu.NONE, Menu.FIRST + 10, Menu.NONE, "Open Script");
+    menu.add(Menu.NONE, Menu.FIRST + 12, Menu.NONE, "Reload");
     menu.add(Menu.NONE, Menu.FIRST + 11, Menu.NONE, "Comikit.se");
 
     return true;
@@ -135,6 +151,11 @@ function onOptionsItemSelected(item)
     {
         var intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://comikit.se/"));
         Activity.startActivity(intent); 
+    }
+    else
+    if ((Menu.FIRST + 12) == item.getItemId()) 
+    {
+        Activity.openFileOrUrl(Activity.getScriptFileName());
     }
     
     return true;
