@@ -2,17 +2,21 @@ package comikit.droidscript;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.URL;
 
 import android.app.Activity;
 import android.os.Environment;
 
 /**
- * Helper class for reading text files from various sources.
+ * Helper class for file handling.
  * @author Mikael Kindborg
  * Email: mikael.kindborg@gmail.com
  * Blog: divineprogrammer@blogspot.com
@@ -20,15 +24,15 @@ import android.os.Environment;
  * Copyright (c) Mikael Kindborg 2010
  * License: MIT
  */
-public class DroidScriptReader 
+public class DroidScriptFileHandler 
 {
-    private DroidScriptReader()
+    private DroidScriptFileHandler()
     {
     }
     
-    public static DroidScriptReader create()
+    public static DroidScriptFileHandler create()
     {
-        return new DroidScriptReader();
+        return new DroidScriptFileHandler();
     }
     
     public String readStringFromFileOrUrl(String fileOrUrl) throws Exception
@@ -39,27 +43,43 @@ public class DroidScriptReader
         }
         else
         {
-            return readString(openExternalStorageFile(fileOrUrl));
+            return readString(openExternalStorageFileInputStream(fileOrUrl));
         }
     }
 
-    public String readStringFromApplicationFile(Activity activity, String filename) throws Exception
+    public void writeStringToFile(String file, String data) throws Exception
     {
-         return readString(openApplicationFile(activity, filename));
+          writeString(openExternalStorageFileOutputStream(file), data);
     }
     
-    public InputStream openApplicationFile(Activity activity, String filename) throws Exception
+    public String readStringFromApplicationFile(Activity activity, String filename) throws Exception
+    {
+         return readString(openApplicationFileInputStream(activity, filename));
+    }
+    
+    public InputStream openApplicationFileInputStream(Activity activity, String filename) throws Exception
     {
         return activity.openFileInput(filename);
     }
 
-    public InputStream openExternalStorageFile(String filename) throws Exception
+    public InputStream openExternalStorageFileInputStream(String filename) throws Exception
     {
         // Might be useful: content://com.android.htmlfileprovider/sdcard/example/file.html
         return new FileInputStream(
                 new File(Environment.getExternalStorageDirectory() + "/" + filename));
     }
 
+    public OutputStream openExternalStorageFileOutputStream(String filename) throws Exception
+    {
+        return new FileOutputStream(
+            new File(Environment.getExternalStorageDirectory() + "/" + filename));
+    }
+    
+    public boolean externalStorageFileExists(String filename) throws Exception
+    {
+        return new File(Environment.getExternalStorageDirectory() + "/" + filename).exists();
+    }
+    
     public InputStream openUrl(String url) throws Exception
     {
             return new URL(url).openStream();
@@ -75,11 +95,15 @@ public class DroidScriptReader
             if (null == data)  { break; }
             dataBuf.append(data + "\n");
         }
-        
         reader.close();
-        stream.close();
-        
         return dataBuf.toString();
+    }
+
+    public void writeString(OutputStream stream, String data) throws Exception
+    {
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream));
+        writer.write(data);
+        writer.close();
     }
     
     public String readStringRaw(InputStream stream) throws Exception

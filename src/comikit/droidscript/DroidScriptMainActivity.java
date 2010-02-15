@@ -18,12 +18,38 @@ public class DroidScriptMainActivity extends DroidScriptActivity
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
+        ensureScriptExists(
+            "droidscript/DroidScript.js",
+            "http://github.com/divineprog/droidscript/raw/master/javascript/DroidScript.js");
+        ensureScriptExists(
+            "droidscript/Toast.js",
+            "http://github.com/divineprog/droidscript/raw/master/javascript/Toast.js");
+        
         Intent intent = getIntent();
         if (null != intent)
         {
-            intent.putExtra("ScriptName", "droidscript/DroidScriptMainActivity.js");
+            intent.putExtra("ScriptName", "droidscript/DroidScript.js");
         }
+        
         super.onCreate(savedInstanceState);
+    }
+    
+    void ensureScriptExists(String scriptfile, String url)
+    {
+        try
+        {
+            DroidScriptFileHandler handler = DroidScriptFileHandler.create();
+            if (!handler.externalStorageFileExists(scriptfile)) 
+            {
+                handler.writeStringToFile(
+                    scriptfile, 
+                    handler.readStringFromFileOrUrl(url));   
+            }
+        } 
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
     }
 }
 

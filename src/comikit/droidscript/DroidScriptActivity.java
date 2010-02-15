@@ -136,23 +136,25 @@ public class DroidScriptActivity extends Activity
     @Override
     public boolean onOptionsItemSelected(MenuItem item)
     {
-        if ((Menu.FIRST + 1) == item.getItemId()) 
-        {
-            // Reload main script.
-            openFileOrUrl(scriptFileName);
-        }
-        else
-        if ((Menu.FIRST + 2) == item.getItemId())
-        {
-            // Open Log View.
-        }
-        else
-        {
-            // Call JS handler.
-            interpreter.callJsFunction("onOptionsItemSelected", item);
-        }
+        // TODO: Move this to JavaScript or something.
+//        if ((Menu.FIRST + 1) == item.getItemId()) 
+//        {
+//            // Reload main script.
+//            openFileOrUrl(scriptFileName);
+//        }
+//        else
+//        if ((Menu.FIRST + 2) == item.getItemId())
+//        {
+//            // Open Log View.
+//        }
+//        else
+//        {
+//            // Call JS handler.
+//            interpreter.callJsFunction("onOptionsItemSelected", item);
+//        }
         
-        return true;
+         interpreter.callJsFunction("onOptionsItemSelected", item);
+         return true;
     }
     
     public void setScriptFileName(String fileName)
@@ -160,12 +162,12 @@ public class DroidScriptActivity extends Activity
         scriptFileName = fileName;
     }
 
-    public void createOptionsMenuStandardItems(Menu menu)
-    {
-        // Add standard options.
-        menu.add(Menu.NONE, Menu.FIRST + 1, Menu.NONE, "Reload");
-        menu.add(Menu.NONE, Menu.FIRST + 2, Menu.NONE, "View Log");
-    }
+//    public void createOptionsMenuStandardItems(Menu menu)
+//    {
+//        // Add standard options.
+//        menu.add(Menu.NONE, Menu.FIRST + 1, Menu.NONE, "Reload");
+//        menu.add(Menu.NONE, Menu.FIRST + 2, Menu.NONE, "View Log");
+//    }
     
     /**
      * Run a script in the application directory. Less useful since the user 
@@ -175,7 +177,7 @@ public class DroidScriptActivity extends Activity
     {
         try 
         {
-            String code = DroidScriptReader.create().readStringFromApplicationFile(this, filename);
+            String code = DroidScriptFileHandler.create().readStringFromApplicationFile(this, filename);
             return eval(code);
         } 
         catch (Throwable e) 
@@ -192,7 +194,7 @@ public class DroidScriptActivity extends Activity
     public Object openFileOrUrl(final String filenameOrUrl)  {
         try 
         {
-            return eval(DroidScriptReader.create().readStringFromFileOrUrl(filenameOrUrl));
+            return eval(DroidScriptFileHandler.create().readStringFromFileOrUrl(filenameOrUrl));
         } 
         catch (Throwable e) 
         {

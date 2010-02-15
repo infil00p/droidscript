@@ -13,39 +13,23 @@
 // source gods.sh
 // (alias gods='source /path/to/script')
 
+
+var AlertDialog = Packages.android.app.AlertDialog;
+var DialogInterface = Packages.anroid.content.DialogInterface;
+var Widget = Packages.android.widget;
+var LayoutParams = Packages.android.view.ViewGroup.LayoutParams;
+var View = Packages.android.view.View;
+var Gravity = Packages.android.view.Gravity;
+var Intent = Packages.android.content.Intent;
+var Menu = Packages.android.view.Menu;
+var Intent = Packages.android.content.Intent;
+var Uri = Packages.android.net.Uri;
+	
 var Server;
-
-function print(s)
-{
-	var System = Packages.java.lang.System;
-	System.out.println(s);
-}
-
-function startServer()
-{
-	var DroidScriptServer = Packages.comikit.droidscript.DroidScriptServer;
-	Server = DroidScriptServer.create();
-	Server.setPort(4042);
-	Server.setRequestHandler(function(url, data) {
-		print("URL=" + url + " DATA=" + data);
-		return "Hello";
-	});
-	Server.startServer();
-}
-
-function stopServer()
-{
-	Server.stopServer();
-}
+var Editor;
 
 function onCreate(icicle)
 {
-    var Widget = Packages.android.widget;
-    var LayoutParams = Packages.android.view.ViewGroup.LayoutParams;
-    var View = Packages.android.view.View;
-    var Gravity = Packages.android.view.Gravity;
-    var Intent = Packages.android.content.Intent;
-    
     var script = ''
 	    + 'var Widget = Packages.android.widget;\n'
 	    + 'var Gravity = Packages.android.view.Gravity;\n\n'
@@ -70,24 +54,27 @@ function onCreate(icicle)
             1));
     editor.setGravity(Gravity.TOP);
     editor.setVerticalScrollBarEnabled(true);
-    editor.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
-    editor.setScrollContainer(true);
+    editor.setScrollBarStyle(View.SCROLLBARS_OUTSIDE_INSET);
+//    editor.setScrollContainer(true);
     editor.setText(script);
     
-    var button = new Widget.Button(Activity);
-    button.setLayoutParams(new LayoutParams(
+    // Set global variable (yuck!)
+    Editor = editor;
+    
+    var buttonEval = new Widget.Button(Activity);
+    buttonEval.setLayoutParams(new LayoutParams(
             LayoutParams.FILL_PARENT, 
             LayoutParams.WRAP_CONTENT));
-    button.setText("Evaluate");
-    button.setOnClickListener(function (view) { 
+    buttonEval.setText("Evaluate");
+    buttonEval.setOnClickListener(function () { 
         Activity.eval(editor.getText().toString()); })  
         
-    var button2 = new Widget.Button(Activity);
-    button2.setLayoutParams(new LayoutParams(
+    var buttonRun = new Widget.Button(Activity);
+    buttonRun.setLayoutParams(new LayoutParams(
             LayoutParams.FILL_PARENT, 
             LayoutParams.WRAP_CONTENT));
-    button2.setText("Run as Activity");
-    button2.setOnClickListener(function (view) { 
+    buttonRun.setText("Run as Activity");
+    buttonRun.setOnClickListener(function () { 
         var intent = new Intent();
         intent.setClassName(Activity, "comikit.droidscript.DroidScriptActivity");
         intent.putExtra("Script", editor.getText().toString());
@@ -100,22 +87,22 @@ function onCreate(icicle)
             LayoutParams.FILL_PARENT));
 
     layout.addView(editor);
-    layout.addView(button);
-    layout.addView(button2);
+    layout.addView(buttonEval);
+    layout.addView(buttonRun);
 
     Activity.setContentView(layout);
 }
 
 function onResume()
 {
-    print("onResume - starting server");
-    //startServer();
+    // print("onResume - starting server");
+    // startServer();
 }
 
 function onPause()
 {
-    print("onPause - stopping server");
-    //stopServer();
+    // print("onPause - stopping server");
+    // stopServer();
 }
 
 function onCreateOptionsMenu(menu)
@@ -125,12 +112,9 @@ function onCreateOptionsMenu(menu)
 
 function onPrepareOptionsMenu(menu)
 {
-    var Menu = Packages.android.view.Menu;
     menu.clear();
-    Activity.createOptionsMenuStandardItems(menu);
-    menu.add(Menu.NONE, Menu.FIRST + 10, Menu.NONE, "Workspace");
+    menu.add(Menu.NONE, Menu.FIRST + 10, Menu.NONE, "Open Script");
     menu.add(Menu.NONE, Menu.FIRST + 11, Menu.NONE, "Comikit.se");
-    menu.add(Menu.NONE, Menu.FIRST + 12, Menu.NONE, "Server");
 
     return true;
 }
@@ -139,12 +123,9 @@ function onPrepareOptionsMenu(menu)
 
 function onOptionsItemSelected(item)
 {
-    var Intent = Packages.android.content.Intent;
-    var Uri = Packages.android.net.Uri;
-    var Menu = Packages.android.view.Menu;
-    
     if ((Menu.FIRST + 10) == item.getItemId()) 
     {
+        openScript();
 //        var intent = new Intent();
 //        intent.setClassName(Activity, "comikit.droidscript.RhinoDroidWorkspace");
 //        Activity.startActivity(intent); 
@@ -158,6 +139,48 @@ function onOptionsItemSelected(item)
     
     return true;
 }
+
+function openScript()
+{
+    var input = new Widget.EditText(Activity);
+    input.setText("droidscript/Toast.js")
+	var dialog = new AlertDialog.Builder(Activity);
+	dialog.setTitle("Open Script");
+	dialog.setMessage("Enter file or url:");
+    dialog.setView(input);
+	dialog.setPositiveButton("Open", function() {
+	    var script = Packages.comikit.droidscript.DroidScriptFileHandler.create().readStringFromFileOrUrl(
+	            input.getText().toString());
+	    Editor.setText(script);
+    });
+    dialog.setNegativeButton("Cancel", function() {
+    });
+	dialog.show();
+}
+
+function print(s)
+{
+	var System = Packages.java.lang.System;
+	System.out.println(s);
+}
+
+function startServer()
+{
+	var DroidScriptServer = Packages.comikit.droidscript.DroidScriptServer;
+	Server = DroidScriptServer.create();
+	Server.setPort(4042);
+	Server.setRequestHandler(function(url, data) {
+		print("URL=" + url + " DATA=" + data);
+		return "Hello";
+	});
+	Server.startServer();
+}
+
+function stopServer()
+{
+	Server.stopServer();
+}
+
 
 //fun onOptionsItemSelected(item)
 //    var Intent = Packages.android.content.Intent
