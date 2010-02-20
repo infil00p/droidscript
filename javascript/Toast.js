@@ -1,5 +1,6 @@
 // Toast example program.
-Widget.Toast.makeText(
+var Toast = Packages.android.widget.Toast;
+Toast.makeText(
      Activity,
      "Hello World!", 
-     Widget.Toast.LENGTH_SHORT).show();
+     Toast.LENGTH_SHORT).show();

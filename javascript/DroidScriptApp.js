@@ -122,8 +122,8 @@ function onPrepareOptionsMenu(menu)
 {
     menu.clear();
     menu.add(Menu.NONE, Menu.FIRST + 10, Menu.NONE, "Open Script");
+    menu.add(Menu.NONE, Menu.FIRST + 11, Menu.NONE, "Start Server");
     menu.add(Menu.NONE, Menu.FIRST + 12, Menu.NONE, "Reload");
-    menu.add(Menu.NONE, Menu.FIRST + 11, Menu.NONE, "Comikit.se");
 
     return true;
 }
@@ -142,13 +142,19 @@ function onOptionsItemSelected(item)
     else
     if ((Menu.FIRST + 11) == item.getItemId()) 
     {
-        var intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://comikit.se/"));
-        Activity.startActivity(intent); 
+        openServer();
+//        var intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://comikit.se/"));
+//        Activity.startActivity(intent); 
     }
     else
     if ((Menu.FIRST + 12) == item.getItemId()) 
     {
         Activity.openFileOrUrl(Activity.getScriptFileName());
+    }
+    else
+    if ((Menu.FIRST + 13) == item.getItemId()) 
+    {
+        displayIpAddress();
     }
     
     return true;
@@ -170,6 +176,15 @@ function openScript()
     dialog.setNegativeButton("Cancel", function() {
     });
     dialog.show();
+}
+
+function openServer()
+{
+    // Launch new activity.
+    var intent = new Intent();
+    intent.setClassName(Activity, "comikit.droidscript.DroidScriptActivity");
+    intent.putExtra("ScriptName", "droidscript/DroidScriptServer.js");
+    Activity.startActivity(intent);
 }
 
 //function openScriptList()
@@ -227,6 +242,11 @@ function startServer()
 function stopServer()
 {
     Server.stopServer();
+}
+
+function displayIpAddress() 
+{
+    
 }
 
 

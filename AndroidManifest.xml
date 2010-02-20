@@ -4,7 +4,7 @@
       android:versionCode="1"
       android:versionName="1.0">
     <application android:icon="@drawable/icon" android:label="DroidScript">
-        <activity android:name=".DroidScriptMainActivity"
+        <activity android:name=".DroidScriptApp"
                   android:label="DroidScript">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

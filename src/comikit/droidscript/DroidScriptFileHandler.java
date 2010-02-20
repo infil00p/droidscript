@@ -22,7 +22,7 @@ import android.os.Environment;
  * Blog: divineprogrammer@blogspot.com
  * Twitter: @divineprog
  * Copyright (c) Mikael Kindborg 2010
- * License: MIT
+ * Source code license: MIT
  */
 public class DroidScriptFileHandler 
 {
@@ -78,6 +78,11 @@ public class DroidScriptFileHandler
     public boolean externalStorageFileExists(String filename) throws Exception
     {
         return new File(Environment.getExternalStorageDirectory() + "/" + filename).exists();
+    }
+    
+    public void installFile(String file, String url)  throws Exception
+    {
+        writeStringToFile(file, readStringFromFileOrUrl(url));
     }
     
     public InputStream openUrl(String url) throws Exception

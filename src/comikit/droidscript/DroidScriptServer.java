@@ -3,10 +3,15 @@ package comikit.droidscript;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -34,23 +39,18 @@ import org.apache.http.protocol.ResponseContent;
 import org.apache.http.protocol.ResponseDate;
 import org.apache.http.protocol.ResponseServer;
 import org.apache.http.util.EntityUtils;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 
-import android.app.Activity;
-import android.os.Bundle;
 import android.util.Log;
 
 /**
- * Small http-server that accepts JavaScript PUT requests.
+ * Small http-server that accepts JavaScript PUT requests. 
  * Based on: http://hc.apache.org/
  * @author Mikael Kindborg
  * Email: mikael.kindborg@gmail.com
  * Blog: divineprogrammer@blogspot.com
  * Twitter: @divineprog
  * Copyright (c) Mikael Kindborg 2010
- * License: MIT
+ * Source code license: MIT
  */
 public class DroidScriptServer
 {
@@ -72,128 +72,176 @@ public class DroidScriptServer
     int port = 4042;
     HttpHandler httpHandler;
     ServerThread server;
-    
-    private DroidScriptServer() 
+
+    private DroidScriptServer()
     {
         httpHandler = new HttpHandler();
     }
 
-    public DroidScriptServer setPort(int port) 
+    public DroidScriptServer setPort(int port)
     {
         this.port = port;
         return this;
     }
-    
-    public DroidScriptServer setRequestHandler(IRequestHandler handler) 
+
+    public DroidScriptServer setRequestHandler(IRequestHandler handler)
     {
         httpHandler.setHandler(handler);
         return this;
     }
-    
-    public DroidScriptServer startServer() 
+
+    public DroidScriptServer startServer()
     {
-        try 
+        try
         {
             server = new ServerThread(port, httpHandler);
             new Thread(server).start();
-        } 
-        catch (Exception e) 
+        }
+        catch (Exception e)
         {
             e.printStackTrace();
         }
         return this;
     }
-    
-    public DroidScriptServer stopServer() 
+
+    public DroidScriptServer stopServer()
     {
         server.exit();
         return this;
     }
 
+    public static String[] getIpAddresses()
+    {
+        try {
+            List<String> ipaddresses = new ArrayList<String>();
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces(); 
+            while (interfaces.hasMoreElements()) 
+            {
+                NetworkInterface intf = interfaces.nextElement();
+                Enumeration<InetAddress> adresses = intf.getInetAddresses(); 
+                while (adresses.hasMoreElements()) 
+                {
+                    InetAddress address = adresses.nextElement();
+                    if (!address.isLoopbackAddress()) 
+                    {
+                        ipaddresses.add(address.getHostAddress().toString());
+                    }
+                }
+            }
+            return (String[]) ipaddresses.toArray();
+        } 
+        catch (SocketException e) 
+        {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static String getIpAddressesAsString()
+    {
+        String[] ipaddresses = getIpAddresses();
+        if (null != ipaddresses) 
+        {
+            String addresses = "";
+            boolean first = true;
+            for (String ipaddress : ipaddresses) 
+            {
+                if (!first) 
+                {
+                    addresses = addresses + ", ";
+                }
+                addresses = addresses + ipaddress;
+                first = false;
+            }
+            return addresses;
+        }
+        return "No ip-addresses found";
+    }
     static class HttpHandler implements HttpRequestHandler
     {
         IRequestHandler handler;
-        
+
         public HttpHandler()
         {
         }
-        
+
         public HttpHandler setHandler(IRequestHandler handler)
         {
             this.handler = handler;
             return this;
         }
-        
+
         public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws IOException
         {
             log("Request line: " + request.getRequestLine());
-            for (Header h : request.getAllHeaders()) 
+            for (Header h : request.getAllHeaders())
             {
                 log("Header: " + h.getName() + "=" + h.getValue());
             }
-            
+
             String method = request.getRequestLine().getMethod().toUpperCase(Locale.ENGLISH);
-            if (method.equals("OPTIONS")) 
+            if (method.equals("OPTIONS"))
             {
                 response.setStatusCode(HttpStatus.SC_OK);
                 response.addHeader("Access-Control-Allow-Origin", "*");
                 response.addHeader("Access-Control-Allow-Methods", "GET, PUT, OPTIONS");
                 response.addHeader("Access-Control-Max-Age", "1728000");
                 Header header = request.getFirstHeader("Access-Control-Request-Headers");
-                if (null != header) 
+                if (null != header)
                 {
                     response.addHeader("Access-Control-Allow-Headers", header.getValue());
                 }
                 log("Responding to OPTIONS");
                 return;
             }
-            
-            if (method.equals("PUT")) 
+
+            if (method.equals("PUT"))
             {
                 log("Start PUT");
-                
+
                 response.setStatusCode(HttpStatus.SC_OK);
-                //response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+                // response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
                 response.addHeader("Access-Control-Allow-Origin", "*");
                 response.addHeader("Connection", "close");
-                
-                if (request instanceof HttpEntityEnclosingRequest) 
+
+                if (request instanceof HttpEntityEnclosingRequest)
                 {
                     HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
-                    String content = EntityUtils.toString(entity,  "UTF-8");
+                    String content = EntityUtils.toString(entity, "UTF-8");
                     String result = handler.handle(request.getRequestLine().getUri(), content);
                     response.setEntity(createBody(result));
                 }
 
                 log("End PUT");
-                
+
                 return;
             }
 
-            if (method.equals("GET")) 
+            if (method.equals("GET"))
             {
-                log("Start PUT");
-                
+                log("Start GET");
+
                 response.setStatusCode(HttpStatus.SC_OK);
                 response.addHeader("Access-Control-Allow-Origin", "*");
                 response.addHeader("Connection", "close");
-                
+
                 String result = handler.handle(request.getRequestLine().getUri(), "GET");
-                
+
                 response.setEntity(createBody(result));
-                
+
                 log("End GET");
-                
+
                 return;
             }
         }
-        
+
         EntityTemplate createBody(final String text)
         {
-            EntityTemplate body = new EntityTemplate(new ContentProducer() 
-            {    
-                public void writeTo(final OutputStream outstream) throws IOException {
-                    OutputStreamWriter writer = new OutputStreamWriter(outstream, "UTF-8"); 
+            EntityTemplate body = new EntityTemplate(new ContentProducer()
+            {
+                public void writeTo(final OutputStream outstream) throws IOException
+                {
+                    OutputStreamWriter writer = new OutputStreamWriter(outstream, "UTF-8");
                     writer.write(text);
                     writer.flush();
                 }
@@ -202,18 +250,18 @@ public class DroidScriptServer
             return body;
         }
     }
-    
-    static class ServerThread implements Runnable 
+
+    static class ServerThread implements Runnable
     {
         int serverPort;
-        HttpParams httpParams; 
+        HttpParams httpParams;
         HttpService httpService;
         ServerSocket serversocket = null;
-        
-        public ServerThread(int port, HttpRequestHandler requestHandler) throws IOException 
+
+        public ServerThread(int port, HttpRequestHandler requestHandler) throws IOException
         {
             serverPort = port;
-            
+
             // Set HTTP parameters.
             httpParams = new BasicHttpParams()
                 .setIntParameter(CoreConnectionPNames.SO_TIMEOUT, 5000)
@@ -228,51 +276,48 @@ public class DroidScriptServer
             httpProcessor.addInterceptor(new ResponseServer());
             httpProcessor.addInterceptor(new ResponseContent());
             httpProcessor.addInterceptor(new ResponseConnControl());
-            
+
             // Set up request handler.
             HttpRequestHandlerRegistry reqistry = new HttpRequestHandlerRegistry();
             reqistry.register("*", requestHandler);
-            
+
             // Set up the HTTP service.
-            httpService = new HttpService(
-                    httpProcessor, 
-                    new DefaultConnectionReuseStrategy(), 
-                    new DefaultHttpResponseFactory());
+            httpService = new HttpService(httpProcessor, new DefaultConnectionReuseStrategy(),
+                new DefaultHttpResponseFactory());
             httpService.setParams(httpParams);
             httpService.setHandlerResolver(reqistry);
 
             // Create server socket.
             serversocket = new ServerSocket(serverPort);
-
         }
-        
+
         public void exit()
         {
-            try 
+            try
             {
                 serversocket.close();
-            } 
-            catch (IOException e) 
+            }
+            catch (IOException e)
             {
                 e.printStackTrace();
             }
         }
-        
-        public void run() 
+
+        public void run()
         {
             Socket socket = null;
             DefaultHttpServerConnection connection = null;
 
             // TODO: Kolla hur detta är gjort i webbservern i kodexemplet:
             // http://svn.apache.org/repos/asf/httpcomponents/httpcore/branches/4.0.x/httpcore/src/examples/org/apache/http/examples/ElementalHttpServer.java
-            
-            try 
+
+            try
             {
                 log("Listening on port " + serversocket.getLocalPort());
 
-                while (!serversocket.isClosed() && !Thread.interrupted()) 
+                while (!serversocket.isClosed() && !Thread.interrupted())
                 {
-                   log("Waiting for connection");
+                    log("Waiting for connection");
 
                     try
                     {
@@ -282,22 +327,22 @@ public class DroidScriptServer
                         log("Incoming connection from " + socket.getInetAddress());
                         connection.bind(socket, httpParams);
 
-                        while (!serversocket.isClosed() && connection.isOpen() && !Thread.interrupted()) 
+                        while (!serversocket.isClosed() && connection.isOpen() && !Thread.interrupted())
                         {
                             httpService.handleRequest(connection, new BasicHttpContext(null));
                         }
-                        
+
                         log("Exit request handler loop");
-                    } 
-                    catch (Exception e) 
+                    }
+                    catch (Exception e)
                     {
                         e.printStackTrace();
-                        //throw e;
+                        // throw e;
                     }
-                    finally 
+                    finally
                     {
                         log("Closing connection - about to");
-                        if (null != connection) 
+                        if (null != connection)
                         {
                             log("Closing connection");
                             connection.close();
@@ -305,18 +350,18 @@ public class DroidScriptServer
                     }
                 }
             }
-            catch (Exception e) 
+            catch (Exception e)
             {
                 e.printStackTrace();
             }
-            finally 
+            finally
             {
-                try 
+                try
                 {
                     log("Closing server socket");
                     serversocket.close();
-                } 
-                catch (IOException ignore) 
+                }
+                catch (IOException ignore)
                 {
                     ignore.printStackTrace();
                 }
@@ -328,160 +373,161 @@ public class DroidScriptServer
 }
 
 //              
-//          });
-//          body.setContentType("text/html; charset=UTF-8");
-//          response.setEntity(body);
-            
-//            String method = request.getRequestLine().getMethod().toUpperCase(Locale.ENGLISH);
-//            if (!method.equals("GET") && !method.equals("HEAD") && !method.equals("POST")) {
-//                throw new MethodNotSupportedException(method + " method not supported"); 
-//            }
-//            String target = request.getRequestLine().getUri();
+// });
+// body.setContentType("text/html; charset=UTF-8");
+// response.setEntity(body);
+
+// String method =
+// request.getRequestLine().getMethod().toUpperCase(Locale.ENGLISH);
+// if (!method.equals("GET") && !method.equals("HEAD") &&
+// !method.equals("POST")) {
+// throw new MethodNotSupportedException(method + " method not supported");
+// }
+// String target = request.getRequestLine().getUri();
 //
-//            if (request instanceof HttpEntityEnclosingRequest) {
-//                HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
-//                byte[] entityContent = EntityUtils.toByteArray(entity);
-//                System.out.println("Incoming entity content (bytes): " + entityContent.length);
-//            }
+// if (request instanceof HttpEntityEnclosingRequest) {
+// HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
+// byte[] entityContent = EntityUtils.toByteArray(entity);
+// System.out.println("Incoming entity content (bytes): " +
+// entityContent.length);
+// }
 //            
-//            final File file = new File(this.docRoot, URLDecoder.decode(target));
-//            if (!file.exists()) {
+// final File file = new File(this.docRoot, URLDecoder.decode(target));
+// if (!file.exists()) {
 //
-//                response.setStatusCode(HttpStatus.SC_NOT_FOUND);
-//                EntityTemplate body = new EntityTemplate(new ContentProducer() 
-//                {    
-//                    public void writeTo(final OutputStream outstream) throws IOException {
-//                        OutputStreamWriter writer = new OutputStreamWriter(outstream, "UTF-8"); 
-//                        writer.write("<html><body><h1>");
-//                        writer.write("File ");
-//                        writer.write(file.getPath());
-//                        writer.write(" not found");
-//                        writer.write("</h1></body></html>");
-//                        writer.flush();
-//                    }
-//                });
-//                body.setContentType("text/html; charset=UTF-8");
-//                response.setEntity(body);
-//                System.out.println("File " + file.getPath() + " not found");
+// response.setStatusCode(HttpStatus.SC_NOT_FOUND);
+// EntityTemplate body = new EntityTemplate(new ContentProducer()
+// {
+// public void writeTo(final OutputStream outstream) throws IOException {
+// OutputStreamWriter writer = new OutputStreamWriter(outstream, "UTF-8");
+// writer.write("<html><body><h1>");
+// writer.write("File ");
+// writer.write(file.getPath());
+// writer.write(" not found");
+// writer.write("</h1></body></html>");
+// writer.flush();
+// }
+// });
+// body.setContentType("text/html; charset=UTF-8");
+// response.setEntity(body);
+// System.out.println("File " + file.getPath() + " not found");
 //                
-//            } else if (!file.canRead() || file.isDirectory()) {
+// } else if (!file.canRead() || file.isDirectory()) {
 //                
-//                response.setStatusCode(HttpStatus.SC_FORBIDDEN);
-//                EntityTemplate body = new EntityTemplate(new ContentProducer() {
+// response.setStatusCode(HttpStatus.SC_FORBIDDEN);
+// EntityTemplate body = new EntityTemplate(new ContentProducer() {
 //                    
-//                    public void writeTo(final OutputStream outstream) throws IOException {
-//                        OutputStreamWriter writer = new OutputStreamWriter(outstream, "UTF-8"); 
-//                        writer.write("<html><body><h1>");
-//                        writer.write("Access denied");
-//                        writer.write("</h1></body></html>");
-//                        writer.flush();
-//                    }
+// public void writeTo(final OutputStream outstream) throws IOException {
+// OutputStreamWriter writer = new OutputStreamWriter(outstream, "UTF-8");
+// writer.write("<html><body><h1>");
+// writer.write("Access denied");
+// writer.write("</h1></body></html>");
+// writer.flush();
+// }
 //                    
-//                });
-//                body.setContentType("text/html; charset=UTF-8");
-//                response.setEntity(body);
-//                System.out.println("Cannot read file " + file.getPath());
+// });
+// body.setContentType("text/html; charset=UTF-8");
+// response.setEntity(body);
+// System.out.println("Cannot read file " + file.getPath());
 //                
-//            } else {
+// } else {
 //                
-//                response.setStatusCode(HttpStatus.SC_OK);
-//                FileEntity body = new FileEntity(file, "text/html");
-//                response.setEntity(body);
+// response.setStatusCode(HttpStatus.SC_OK);
+// FileEntity body = new FileEntity(file, "text/html");
+// response.setEntity(body);
 //                
-//            }
+// }
 
+// static class StreamWriter
+// {
+// public void write(OutputStream out, String data)
+// {
+// try
+// {
+// DataOutputStream stream = new DataOutputStream(out);
+// stream.writeChars(data);
+// stream.flush();
+// }
+// catch (Exception e)
+// {
+// e.printStackTrace();
+// }
+// }
+// }
 
-    
-//    static class StreamWriter
-//    {
-//        public void write(OutputStream out, String data)
-//        {
-//            try
-//            {
-//                DataOutputStream stream = new DataOutputStream(out);
-//                stream.writeChars(data);
-//                stream.flush();
-//            }
-//            catch (Exception e)
-//            {
-//                e.printStackTrace();
-//            }
-//        }
-//    }
-
-//    static class ServerOld implements Runnable
-//    {
-//        Object theActivity;
-//        Evaluator theEvaluator;
+// static class ServerOld implements Runnable
+// {
+// Object theActivity;
+// Evaluator theEvaluator;
 //        
-//        public ServerOld(Object activity, Evaluator evaluator)
-//        {
-//            theActivity = activity;
-//            theEvaluator = evaluator;
-//        }
+// public ServerOld(Object activity, Evaluator evaluator)
+// {
+// theActivity = activity;
+// theEvaluator = evaluator;
+// }
 //        
-//        public void run()
-//        {
-//            boolean shutdown = false;
-//            while (!shutdown)
-//            {
-//                print("Welcome to JavaScript on Android!");
-//                try  
-//                {
-//                    //Evaluator theEvaluator = new Evaluator(theActivity);
-//                    ServerSocket serversocket = new ServerSocket(4042);
+// public void run()
+// {
+// boolean shutdown = false;
+// while (!shutdown)
+// {
+// print("Welcome to JavaScript on Android!");
+// try
+// {
+// //Evaluator theEvaluator = new Evaluator(theActivity);
+// ServerSocket serversocket = new ServerSocket(4042);
 //                    
-//                    boolean restart = false;
-//                    while (!restart) 
-//                    {
-//                        print("Waiting for connection...");
-//                        Socket socket = serversocket.accept();
-//                        print("Connected!");
+// boolean restart = false;
+// while (!restart)
+// {
+// print("Waiting for connection...");
+// Socket socket = serversocket.accept();
+// print("Connected!");
 //                        
-//                        // Read from socket
-//                        InputStream in = socket.getInputStream();
-//                        OutputStream out = socket.getOutputStream();
-//                        HttpRequest request = new HttpRequest(in);
-//                        request.parseHeader();
-//                        String data = request.readContents();
+// // Read from socket
+// InputStream in = socket.getInputStream();
+// OutputStream out = socket.getOutputStream();
+// HttpRequest request = new HttpRequest(in);
+// request.parseHeader();
+// String data = request.readContents();
 //                        
-//                        print("data: " + data);
+// print("data: " + data);
 //                        
-//                        if (data.startsWith("restart"))
-//                        {
-//                            restart = true;
-//                            socket.close();
-//                            break;
-//                        }
+// if (data.startsWith("restart"))
+// {
+// restart = true;
+// socket.close();
+// break;
+// }
 //                        
-//                        if (data.startsWith("shutdown"))
-//                        {
-//                            restart = true;
-//                            shutdown = true;
-//                            socket.close();
-//                            break;
-//                        }
+// if (data.startsWith("shutdown"))
+// {
+// restart = true;
+// shutdown = true;
+// socket.close();
+// break;
+// }
 //                        
-//                        // Evaluate
-//                        Object result = theEvaluator.evalInUiThread(data);
-//                        // Object result = new String("Android here!");
+// // Evaluate
+// Object result = theEvaluator.evalInUiThread(data);
+// // Object result = new String("Android here!");
 //                        
-//                        // Send reply.
-//                        PrintStream output = new PrintStream(out);
-//                        output.print(result.toString());
-//                        output.close();
-//                        request.close();
-//                        socket.close();
-//                    } // while
+// // Send reply.
+// PrintStream output = new PrintStream(out);
+// output.print(result.toString());
+// output.close();
+// request.close();
+// socket.close();
+// } // while
 //                    
-//                    serversocket.close();
-//                    theEvaluator.exit();
-//                }
-//                catch (Exception e)
-//                {
-//                    e.printStackTrace();
-//                }
-//            }  // while
-//        } // run
-//    } // class Server
+// serversocket.close();
+// theEvaluator.exit();
+// }
+// catch (Exception e)
+// {
+// e.printStackTrace();
+// }
+// } // while
+// } // run
+// } // class Server
 
