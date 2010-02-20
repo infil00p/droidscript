@@ -37,7 +37,7 @@ public class DroidScriptApp extends DroidScriptActivity
         return 
         new String[][]
         {
-            { "droidscript/DroidScript.js", urlBase + "javascript/DroidScriptApp.js" },
+            { "droidscript/DroidScriptApp.js", urlBase + "javascript/DroidScriptApp.js" },
             { "droidscript/DroidScriptServer.js", urlBase + "javascript/DroidScriptServer.js" },
             { "droidscript/Toast.js", urlBase + "javascript/Toast.js" }
         };
