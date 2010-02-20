@@ -178,7 +178,6 @@ public class DroidScriptActivity extends Activity
         {
             e.printStackTrace();
             DroidScript.log("Error in openApplicationFile: " + e.toString());
-            reportEvalError(e);
             return e;
         }
     }
@@ -195,7 +194,6 @@ public class DroidScriptActivity extends Activity
         {
             e.printStackTrace();
             DroidScript.log("Error in openApplicationFile: " + e.toString());
-            reportEvalError(e);
             return e;
         }
     }
@@ -216,6 +214,7 @@ public class DroidScriptActivity extends Activity
                 catch (Throwable e)
                 {
                     e.printStackTrace();
+                    Log.i("DroidScript", "Error in eval: " + e.toString());
                     DroidScript.log("Error in eval: " + e.toString());
                     result.set(e);
                 }
@@ -230,6 +229,11 @@ public class DroidScriptActivity extends Activity
         return result.get();
     }
     
+    /**
+     * This works because it is called from the "onXXX" methods which are
+     * called in the UI-thread. 
+     * TODO: Make interpreter less thread sensitive.
+     */
     public Object callJsFunction(String funName, Object... args)
     {
         try 

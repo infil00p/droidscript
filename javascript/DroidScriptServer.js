@@ -20,7 +20,7 @@ function onCreate(icicle)
     view.setText(
         "Welcome to the DroidScript Live Server!\n"
         + "IP-address:\n"
-        DroidScript.DroidScriptServer.getIpAddressesAsString()
+        + DroidScript.DroidScriptServer.getIpAddressesAsString()
     );
     
     // Set global variable (yuck!)
@@ -106,7 +106,7 @@ function startServer()
     Server.setPort(4042);
     Server.setRequestHandler(function(url, data) {
         print("URL=" + url + " DATA=" + data);
-        return "Hello";
+        return Activity.eval(data);
     });
     Server.startServer();
 }

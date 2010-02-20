@@ -22,7 +22,7 @@ public class DroidScriptApp extends DroidScriptActivity
         Intent intent = getIntent();
         if (null != intent)
         {
-            intent.putExtra("ScriptName", "droidscript/DroidScript.js");
+            intent.putExtra("ScriptName", "droidscript/DroidScriptApp.js");
         }
         
         super.onCreate(savedInstanceState);
@@ -37,7 +37,7 @@ public class DroidScriptApp extends DroidScriptActivity
         return 
         new String[][]
         {
-            { "droidscript/DroidScript.js", urlBase + "javascript/DroidScript.js" },
+            { "droidscript/DroidScript.js", urlBase + "javascript/DroidScriptApp.js" },
             { "droidscript/DroidScriptServer.js", urlBase + "javascript/DroidScriptServer.js" },
             { "droidscript/Toast.js", urlBase + "javascript/Toast.js" }
         };

@@ -112,13 +112,14 @@ public class DroidScriptServer
 
     public static String[] getIpAddresses()
     {
-        try {
+        try 
+        {
             List<String> ipaddresses = new ArrayList<String>();
             Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces(); 
             while (interfaces.hasMoreElements()) 
             {
-                NetworkInterface intf = interfaces.nextElement();
-                Enumeration<InetAddress> adresses = intf.getInetAddresses(); 
+                NetworkInterface interf = interfaces.nextElement();
+                Enumeration<InetAddress> adresses = interf.getInetAddresses(); 
                 while (adresses.hasMoreElements()) 
                 {
                     InetAddress address = adresses.nextElement();
@@ -128,7 +129,11 @@ public class DroidScriptServer
                     }
                 }
             }
-            return (String[]) ipaddresses.toArray();
+            
+            if (0 < ipaddresses.size())
+            {
+                return ipaddresses.toArray(new String[1]);
+            }
         } 
         catch (SocketException e) 
         {
