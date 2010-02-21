@@ -149,7 +149,7 @@ function onOptionsItemSelected(item)
     else
     if (menuItemHasId(item, 13)) { updateApplicationScripts(); }
     else
-    if (menuItemHasId(item, 14)) { Activity.finish(); }
+    if (menuItemHasId(item, 14)) { Droid.Log.clear(); Activity.finish(); }
     
     return true;
 }

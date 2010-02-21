@@ -82,7 +82,7 @@ function onOptionsItemSelected(item)
     else
     if (menuItemHasId(item, 12)) { startServer(); }
     else
-    if (menuItemHasId(item, 13)) { Activity.finish(); }
+    if (menuItemHasId(item, 13)) { Droid.Log.clear(); Activity.finish(); }
 
     return true;
 }
@@ -114,12 +114,12 @@ function startServer()
         // TODO: Handle PUT and GET, look for action in request (eval or run).
         // TODO: Add save and get script.
         // URI=/favicon.ico 
-        log("URI=" + uri + " DATA=" + data);
-        if (("PUT" == method) && ("/eval/" == uri.substring(0, 6)))
+        log("METHOD=" + method + " URI=" + uri + " DATA=" + data);
+        if (("PUT" == method) && (uri.length() > 5) && ("/eval/" == uri.substring(0, 6)))
         {
             return Activity.eval(data);
         }
-        if (("PUT" == method) && ("/run/" == uri.substring(0, 5)))
+        if (("PUT" == method) && (uri.length() > 4) && ("/run/" == uri.substring(0, 5)))
         {
             var intent = new Intent();
             intent.setClassName(Activity, "comikit.droidscript.DroidScriptActivity");
@@ -127,11 +127,11 @@ function startServer()
             Activity.startActivity(intent);
             return;
         }
-        if (("GET" == method) && ("/eval/" == uri.substring(0, 6)))
+        if (("GET" == method) && (uri.length() > 5) && ("/eval/" == uri.substring(0, 6)))
         {
             return Activity.eval(uri.substring(6));
         }
-        if (("GET" == method) && ("/hello" == uri.substring(0, 6)))
+        if (("GET" == method) && (uri.length() > 5) && ("/hello" == uri.substring(0, 6)))
         {
             return "Welcome to the wonderful world of DroidScript!";
         }

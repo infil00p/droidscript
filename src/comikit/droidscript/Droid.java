@@ -24,8 +24,8 @@ import android.widget.TextView;
  */
 public class Droid
 {
-    static MessageLog Log = new MessageLog();
-    static LanguageDictionary Dictionary = new LanguageDictionary();
+    public static MessageLog Log = new MessageLog();
+    public static LanguageDictionary Dictionary = new LanguageDictionary();
     
     public static void log(String message)
     {
