@@ -1,3 +1,19 @@
+//
+// This file defines the DroidScript server Activity. The activity starts
+// a tiny web server and listens for requests on port 4042 (as default).
+// PUT and GET requests are accepted. There is no security what so ever
+// at this stage!
+//
+// TODO: Clean up the code. Add translations.
+//
+// @author Mikael Kindborg
+// Email: mikael.kindborg@gmail.com
+// Blog: divineprogrammer@blogspot.com
+// Twitter: @divineprog
+// Copyright (c) Mikael Kindborg 2010
+// Source code license: MIT
+//
+
 var AlertDialog = Packages.android.app.AlertDialog;
 var DialogInterface = Packages.anroid.content.DialogInterface;
 var Widget = Packages.android.widget;
@@ -9,9 +25,9 @@ var Menu = Packages.android.view.Menu;
 var Intent = Packages.android.content.Intent;
 var Uri = Packages.android.net.Uri;
 var DroidScript = Packages.comikit.droidscript;
+var Droid = Packages.comikit.droidscript.Droid;
 
 var Server;
-var MessageView;
 
 function onCreate(icicle)
 {
@@ -31,13 +47,13 @@ function onCreate(icicle)
 
 function onResume()
 {
-    print("onResume - starting server");
+    log("onResume - starting server");
     startServer();
 }
 
 function onPause()
 {
-    print("onPause - stopping server");
+    log("onPause - stopping server");
     stopServer();
 }
 
@@ -49,54 +65,44 @@ function onCreateOptionsMenu(menu)
 function onPrepareOptionsMenu(menu)
 {
     menu.clear();
-    menu.add(Menu.NONE, Menu.FIRST + 10, Menu.NONE, "Show Messages");
-    menu.add(Menu.NONE, Menu.FIRST + 12, Menu.NONE, "Stop server");
-    menu.add(Menu.NONE, Menu.FIRST + 13, Menu.NONE, "Start server");
-    menu.add(Menu.NONE, Menu.FIRST + 11, Menu.NONE, "Close");
-
+    
+    menuAdd(menu, 10, Droid.translate("Messages"));
+    menuAdd(menu, 11, Droid.translate("Stop server"));
+    menuAdd(menu, 12, Droid.translate("Start server"));
+    menuAdd(menu, 13, Droid.translate("Close"));
+    
     return true;
 }
 
 function onOptionsItemSelected(item)
 {
-    if ((Menu.FIRST + 10) == item.getItemId()) 
-    {
-        // Show message view.
-        showMessages();
-    }
+    if (menuItemHasId(item, 10)) { Droid.showMessages(Activity); }
     else
-    if ((Menu.FIRST + 11) == item.getItemId()) 
-    {
-        // Close this activity.
-    }
+    if (menuItemHasId(item, 11)) { stopServer(); }
     else
-    if ((Menu.FIRST + 12) == item.getItemId()) 
-    {
-        stopServer();
-    }
+    if (menuItemHasId(item, 12)) { startServer(); }
     else
-    if ((Menu.FIRST + 13) == item.getItemId()) 
-    {
-        startServer();
-    }
+    if (menuItemHasId(item, 13)) { Activity.finish(); }
 
     return true;
 }
 
-function showMessages()
+// Menu helper function.
+function menuAdd(menu, id, label)
 {
-    var dialog = new AlertDialog.Builder(Activity);
-    dialog.setTitle("Messages");
-    dialog.setView(MessageView);
-    dialog.setPositiveButton("Close", function() {
-    });
-    dialog.show();
+    menu.add(Menu.NONE, Menu.FIRST + id, Menu.NONE, label);
 }
 
-function print(s)
+// Menu helper function.
+function menuItemHasId(item, id)
 {
-    var System = Packages.java.lang.System;
-    System.out.println(s);
+    return (Menu.FIRST + id) == item.getItemId();
+}
+
+function log(s)
+{
+    var Log = Packages.android.util.Log;
+    Log.i("DroidScript", s);
 }
 
 function startServer()
@@ -104,9 +110,33 @@ function startServer()
     var DroidScriptServer = Packages.comikit.droidscript.DroidScriptServer;
     Server = DroidScriptServer.create();
     Server.setPort(4042);
-    Server.setRequestHandler(function(url, data) {
-        print("URL=" + url + " DATA=" + data);
-        return Activity.eval(data);
+    Server.setRequestHandler(function(method, uri, data) {
+        // TODO: Handle PUT and GET, look for action in request (eval or run).
+        // TODO: Add save and get script.
+        // URI=/favicon.ico 
+        log("URI=" + uri + " DATA=" + data);
+        if (("PUT" == method) && ("/eval/" == uri.substring(0, 6)))
+        {
+            return Activity.eval(data);
+        }
+        if (("PUT" == method) && ("/run/" == uri.substring(0, 5)))
+        {
+            var intent = new Intent();
+            intent.setClassName(Activity, "comikit.droidscript.DroidScriptActivity");
+            intent.putExtra("Script", data);
+            Activity.startActivity(intent);
+            return;
+        }
+        if (("GET" == method) && ("/eval/" == uri.substring(0, 6)))
+        {
+            return Activity.eval(uri.substring(6));
+        }
+        if (("GET" == method) && ("/hello" == uri.substring(0, 6)))
+        {
+            return "Welcome to the wonderful world of DroidScript!";
+        }
+        
+        return "Unknown request";
     });
     Server.startServer();
 }

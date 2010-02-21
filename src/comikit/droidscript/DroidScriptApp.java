@@ -51,7 +51,16 @@ public class DroidScriptApp extends DroidScriptActivity
     {
         try
         {
+            String droidScriptDirectory = "droidscript";
+            
             DroidScriptFileHandler handler = DroidScriptFileHandler.create(); 
+            
+            // Create the droidscript directory if it does not exist.
+            if (!handler.externalStorageFileExists(droidScriptDirectory))
+            {
+                handler.externalStorageCreateDirectory(droidScriptDirectory);
+            }
+            
             for (String[] entry : applicationFiles())
             {
                 if (!handler.externalStorageFileExists(entry[0])) 
@@ -62,16 +71,16 @@ public class DroidScriptApp extends DroidScriptActivity
         } 
         catch (Exception e)
         {
-            DroidScript.log("Error in installApplicationFiles: " + e.toString());
+            Droid.log("Error in installApplicationFiles: " + e.toString());
             e.printStackTrace();
         }
     }
     
     /**
-     * Update (overwrite) external application files.
+     * Reinstall (overwrite) external application files.
      * This will overwrite user modifications to these files.
      */
-    public void updateApplicationFiles()
+    public void reinstallApplicationFiles()
     {
         try
         {
@@ -83,7 +92,7 @@ public class DroidScriptApp extends DroidScriptActivity
         } 
         catch (Exception e)
         {
-            DroidScript.log("Error in updateApplicationFiles: " + e.toString());
+            Droid.log("Error in updateApplicationFiles: " + e.toString());
             e.printStackTrace();
         }
     }

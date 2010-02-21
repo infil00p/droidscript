@@ -1,19 +1,28 @@
-// adb push Hello.js /data/data/comikit.droidscript/files/
+//
+// This file defines the main Activity for the DroidScript application.
+// The style used is function based. Global variables and functions are
+// used. Like in the old Lisp days! 
+//
+// I have been thinking about changing the design to use JavaScript objects 
+// instead (similar to the massive jQuery closure). But it is kind of
+// refreshing to go with a really simple design. The way it works now is
+// that DroidScriptActivity (Java code) calls functions in this file for
+// various events in the program. There might be problems with "name space
+// pollution" if JavaScript libraries become common on DroidScript, so this
+// design may need to change.
+//
+// TODO: Add better error handling.
+//
+// @author Mikael Kindborg
+// Email: mikael.kindborg@gmail.com
+// Blog: divineprogrammer@blogspot.com
+// Twitter: @divineprog
+// Copyright (c) Mikael Kindborg 2010
+// Source code license: MIT
+//
 
-// How to work with the emulator
-// Create an SD card image:
-// mksdcard 256M sdcard.iso
-// Launch emulator:
-// emulator -avd myavd -sdcard sdcard.iso
-// Copy files to the card:
-// adb push Hello.js /sdcard/Hello.js
-// Set up port forwarding to the emulator:
-// adb forward tcp:4042 tcp:4042
-// My start script
-// source gods.sh
-// (alias gods='source /path/to/script')
-
-
+// Short names for packages.
+var Droid = Packages.comikit.droidscript.Droid;
 var AlertDialog = Packages.android.app.AlertDialog;
 var DialogInterface = Packages.anroid.content.DialogInterface;
 var Widget = Packages.android.widget;
@@ -24,12 +33,16 @@ var Intent = Packages.android.content.Intent;
 var Menu = Packages.android.view.Menu;
 var Intent = Packages.android.content.Intent;
 var Uri = Packages.android.net.Uri;
-    
+
+// Global variables.
 var Server;
 var Editor;
 
+// Called when creating the Activity
 function onCreate(icicle)
 {
+    // An example script that can both be evaluated and run
+    // as an activity.
     var script = ''
         + 'var Widget = Packages.android.widget;\n'
         + 'var Gravity = Packages.android.view.Gravity;\n\n'
@@ -46,12 +59,15 @@ function onCreate(icicle)
         + 'Widget.Toast.makeText(Activity,\n'
         + '    "Hello World! Tamejfan!",\n'
         + '    Widget.Toast.LENGTH_SHORT).show();\n'
+        + '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n';
     
     var editor = new Widget.EditText(Activity);
     editor.setLayoutParams(new Widget.LinearLayout.LayoutParams(
             LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT, 1));
     editor.setGravity(Gravity.TOP);
     editor.setSelectAllOnFocus(false);
+    // FIXME: Cannot make the scrollbar visible!
+    // FIXME: Virtual keyboard covers the lower half of the text area!
     editor.setVerticalScrollBarEnabled(true);
     editor.setScrollBarStyle(View.SCROLLBARS_OUTSIDE_INSET);
 //    editor.setScrollContainer(true);
@@ -60,34 +76,29 @@ function onCreate(icicle)
     // Set global variable (yuck!)
     Editor = editor;
     
+    // The button that evaluates the code in the script view.
     var buttonEval = new Widget.Button(Activity);
     buttonEval.setLayoutParams(new Widget.LinearLayout.LayoutParams(
         LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT, 1));
-    buttonEval.setText("Evaluate");
+    buttonEval.setText(Droid.translate("EVALUATE"));
     buttonEval.setOnClickListener(function () { 
         Activity.eval(editor.getText().toString()); });
-        
+    
+    // Run the code in the script view as a new activity.
     var buttonRun = new Widget.Button(Activity);
     buttonRun.setLayoutParams(new Widget.LinearLayout.LayoutParams(
         LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT, 1));
-    buttonRun.setText("Run Activity");
+    buttonRun.setText(Droid.translate("RUN_AS_ACTIVITY"));
     buttonRun.setOnClickListener(function () { 
         var intent = new Intent();
         intent.setClassName(Activity, "comikit.droidscript.DroidScriptActivity");
         intent.putExtra("Script", editor.getText().toString());
         Activity.startActivity(intent); });
     
-    var buttonOpen = new Widget.Button(Activity);
-    buttonRun.setLayoutParams(new Widget.LinearLayout.LayoutParams(
-        LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT, 1));
-    buttonOpen.setText("Open Script");
-    buttonOpen.setOnClickListener(function () { openScript(); });
-    
     var buttonLayout = new Widget.LinearLayout(Activity);
     buttonLayout.setOrientation(Widget.LinearLayout.HORIZONTAL);
     buttonLayout.setLayoutParams(new Widget.LinearLayout.LayoutParams(
         LayoutParams.FILL_PARENT,  LayoutParams.WRAP_CONTENT, 0));
-    buttonLayout.addView(buttonOpen);
     buttonLayout.addView(buttonEval);
     buttonLayout.addView(buttonRun);
     
@@ -103,59 +114,42 @@ function onCreate(icicle)
 
 function onResume()
 {
-    // print("onResume - starting server");
-    // startServer();
 }
 
 function onPause()
 {
-    // print("onPause - stopping server");
-    // stopServer();
 }
 
 function onCreateOptionsMenu(menu)
 {
+    // We create the menu dynamically instead!
     return true;
 }
 
 function onPrepareOptionsMenu(menu)
 {
     menu.clear();
-    menu.add(Menu.NONE, Menu.FIRST + 10, Menu.NONE, "Open Script");
-    menu.add(Menu.NONE, Menu.FIRST + 11, Menu.NONE, "Start Server");
-    menu.add(Menu.NONE, Menu.FIRST + 12, Menu.NONE, "Reload");
+    
+    menuAdd(menu, 10, Droid.translate("OPEN_SCRIPT"));
+    menuAdd(menu, 11, Droid.translate("START_SERVER"));
+    menuAdd(menu, 12, Droid.translate("SHOW_MESSAGES"));
+    menuAdd(menu, 13, Droid.translate("UPDATE_APP_SCRIPTS"));
+    menuAdd(menu, 14, Droid.translate("QUIT_APP"));
 
     return true;
 }
 
-// "Satsa på onlineteknolgi istället för offlineteknologi" Göran on byggverktyg 20100201
-
 function onOptionsItemSelected(item)
 {
-    if ((Menu.FIRST + 10) == item.getItemId()) 
-    {
-        openScript();
-//        var intent = new Intent();
-//        intent.setClassName(Activity, "comikit.droidscript.RhinoDroidWorkspace");
-//        Activity.startActivity(intent); 
-    }
+    if (menuItemHasId(item, 10)) { openScript(); }
+    else 
+    if (menuItemHasId(item, 11)) { openServer(); }
     else
-    if ((Menu.FIRST + 11) == item.getItemId()) 
-    {
-        openServer();
-//        var intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://comikit.se/"));
-//        Activity.startActivity(intent); 
-    }
+    if (menuItemHasId(item, 12)) { Droid.showMessages(Activity); }
     else
-    if ((Menu.FIRST + 12) == item.getItemId()) 
-    {
-        Activity.openFileOrUrl(Activity.getScriptFileName());
-    }
+    if (menuItemHasId(item, 13)) { updateApplicationScripts(); }
     else
-    if ((Menu.FIRST + 13) == item.getItemId()) 
-    {
-        displayIpAddress();
-    }
+    if (menuItemHasId(item, 14)) { Activity.finish(); }
     
     return true;
 }
@@ -163,17 +157,17 @@ function onOptionsItemSelected(item)
 function openScript()
 {
     var input = new Widget.EditText(Activity);
-    input.setText("droidscript/Toast.js")
+    input.setText("droidscript/Toast.js");
     var dialog = new AlertDialog.Builder(Activity);
-    dialog.setTitle("Open Script");
-    dialog.setMessage("Enter file or url:");
+    dialog.setTitle(Droid.translate("OPEN_SCRIPT"));
+    dialog.setMessage(Droid.translate("ENTER_FILE_OR_URL"));
     dialog.setView(input);
-    dialog.setPositiveButton("Open", function() {
-        var script = Packages.comikit.droidscript.DroidScriptFileHandler.create().readStringFromFileOrUrl(
-                input.getText().toString());
+    dialog.setPositiveButton(Droid.translate("OPEN"), function() {
+        var script = Packages.comikit.droidscript.DroidScriptFileHandler
+            .create().readStringFromFileOrUrl(input.getText().toString());
         Editor.setText(script);
     });
-    dialog.setNegativeButton("Cancel", function() {
+    dialog.setNegativeButton(Droid.translate("CANCEL"), function() {
     });
     dialog.show();
 }
@@ -186,6 +180,88 @@ function openServer()
     intent.putExtra("ScriptName", "droidscript/DroidScriptServer.js");
     Activity.startActivity(intent);
 }
+
+function updateApplicationScripts()
+{
+    var dialog = new AlertDialog.Builder(Activity);
+    dialog.setTitle(Droid.translate("UPDATE_APP_SCRIPTS"));
+    dialog.setMessage(Droid.translate("THIS_WILL_OVERWRITE_ALL_APP_SCRIPTS"));
+    dialog.setPositiveButton(Droid.translate("UPDATE"), function() {
+        Activity.reinstallApplicationFiles();
+        updateApplicationScriptsDone();
+    });
+    dialog.setNegativeButton(Droid.translate("CANCEL"), function() {
+    });
+    dialog.show();
+}
+
+function updateApplicationScriptsDone()
+{
+    var dialog = new AlertDialog.Builder(Activity);
+    dialog.setTitle(Droid.translate("UPDATE_APP_SCRIPTS_DONE"));
+    dialog.setMessage(Droid.translate("UPDATE_APP_SCRIPTS_DONE_RESTART"));
+    dialog.setPositiveButton(Droid.translate("OK"), function() {
+    });
+    dialog.show();
+}
+
+// Menu helper function.
+function menuAdd(menu, id, label)
+{
+    menu.add(Menu.NONE, Menu.FIRST + id, Menu.NONE, label);
+}
+
+// Menu helper function.
+function menuItemHasId(item, id)
+{
+    return (Menu.FIRST + id) == item.getItemId();
+}
+
+//--------------------------------------------------------------------
+// The following is a bunch of comments I keep around, may not make sense to you.
+
+// "Satsa på onlineteknolgi istället för offlineteknologi" Göran on byggverktyg 20100201
+
+//adb push Hello.js /data/data/comikit.droidscript/files/
+
+//How to work with the emulator
+//Create an SD card image:
+//mksdcard 256M sdcard.iso
+//Launch emulator:
+//emulator -avd myavd -sdcard sdcard.iso
+//Copy files to the card:
+//adb push Hello.js /sdcard/Hello.js
+//Set up port forwarding to the emulator:
+//adb forward tcp:4042 tcp:4042
+//My start script
+//source gods.sh
+//(alias gods='source /path/to/script')
+
+//var Lang = Packages.java.lang;
+//var R = Packages.java.lang.reflect;
+//
+//var x = 10;
+//
+//Lang.Class.forName("java.io.Serializable");
+//
+//Packages.android.view.View.OnClickListener.getClass()
+//
+//var v = Lang.Class.forName("android.view.View");
+//var loader = v.getClassLoader()
+//var interfac = Lang.Class.forName("android.view.View.OnClickListener");
+//var loader = interface.getClassLoader();
+//var p = R.Proxy.getProxyClass(loader, Packages.android.view.View.OnClickListener);
+//
+//var intent = new Intent();
+//intent.setClassName(Activity, "comikit.droidscript.RhinoDroidWorkspace");
+//Activity.startActivity(intent); 
+
+// Old code that reloaded the current script file:
+// Activity.openFileOrUrl(Activity.getScriptFileName());
+
+// Open web site
+//var intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://comikit.se/"));
+//Activity.startActivity(intent); 
 
 //function openScriptList()
 //{
@@ -221,34 +297,6 @@ function openServer()
 //
 //}
 
-function print(s)
-{
-    var System = Packages.java.lang.System;
-    System.out.println(s);
-}
-
-function startServer()
-{
-    var DroidScriptServer = Packages.comikit.droidscript.DroidScriptServer;
-    Server = DroidScriptServer.create();
-    Server.setPort(4042);
-    Server.setRequestHandler(function(url, data) {
-        print("URL=" + url + " DATA=" + data);
-        return "Hello";
-    });
-    Server.startServer();
-}
-
-function stopServer()
-{
-    Server.stopServer();
-}
-
-function displayIpAddress() 
-{
-    
-}
-
 
 //fun onOptionsItemSelected(item)
 //    var Intent = Packages.android.content.Intent
@@ -264,4 +312,5 @@ function displayIpAddress()
 //        Activity.startActivity(intent)
 //    
 //    return true
-//    
+// 
+//--------------------------------------------------------------------

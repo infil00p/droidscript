@@ -80,6 +80,11 @@ public class DroidScriptFileHandler
         return new File(Environment.getExternalStorageDirectory() + "/" + filename).exists();
     }
     
+    public boolean externalStorageCreateDirectory(String path) throws Exception
+    {
+        return new File(Environment.getExternalStorageDirectory() + "/" + path).mkdirs();
+    }
+    
     public void installFile(String file, String url)  throws Exception
     {
         writeStringToFile(file, readStringFromFileOrUrl(url));

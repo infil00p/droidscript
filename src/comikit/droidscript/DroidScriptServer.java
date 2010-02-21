@@ -8,6 +8,7 @@ import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -56,7 +57,7 @@ public class DroidScriptServer
 {
     public interface IRequestHandler
     {
-        String handle(String request, String data);
+        String handle(String requestType, String uri, String data);
     }
 
     public static DroidScriptServer create()
@@ -196,7 +197,9 @@ public class DroidScriptServer
                 {
                     response.addHeader("Access-Control-Allow-Headers", header.getValue());
                 }
+                
                 log("Responding to OPTIONS");
+                
                 return;
             }
 
@@ -213,7 +216,7 @@ public class DroidScriptServer
                 {
                     HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
                     String content = EntityUtils.toString(entity, "UTF-8");
-                    String result = handler.handle(request.getRequestLine().getUri(), content);
+                    String result = handler.handle("PUT", request.getRequestLine().getUri(), content);
                     response.setEntity(createBody(result));
                 }
 
@@ -230,7 +233,10 @@ public class DroidScriptServer
                 response.addHeader("Access-Control-Allow-Origin", "*");
                 response.addHeader("Connection", "close");
 
-                String result = handler.handle(request.getRequestLine().getUri(), "GET");
+                String result = handler.handle(
+                    "GET", 
+                    URLDecoder.decode(request.getRequestLine().getUri(), "UTF-8"), 
+                    "");
 
                 response.setEntity(createBody(result));
 

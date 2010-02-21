@@ -61,7 +61,16 @@ public class DroidScriptActivity extends Activity
                 eval(script);
             }
         }
+        
+        // Call the onCreate JavaScript function.
         callJsFunction("onCreate", savedInstanceState);
+        
+        // We should not have any errors at this point.
+        // Check the log and display errors if there are any.
+        if (0 < Droid.Log.getNumberOfMessages()) 
+        {
+            Droid.showMessages(this);
+        }
     }
     
     @Override
@@ -177,7 +186,7 @@ public class DroidScriptActivity extends Activity
         catch (Throwable e) 
         {
             e.printStackTrace();
-            DroidScript.log("Error in openApplicationFile: " + e.toString());
+            Droid.log("Error in openApplicationFile: " + e.toString());
             return e;
         }
     }
@@ -193,7 +202,7 @@ public class DroidScriptActivity extends Activity
         catch (Throwable e) 
         {
             e.printStackTrace();
-            DroidScript.log("Error in openApplicationFile: " + e.toString());
+            Droid.log("Error in openApplicationFile: " + e.toString());
             return e;
         }
     }
@@ -215,7 +224,7 @@ public class DroidScriptActivity extends Activity
                 {
                     e.printStackTrace();
                     Log.i("DroidScript", "Error in eval: " + e.toString());
-                    DroidScript.log("Error in eval: " + e.toString());
+                    Droid.log("Error in eval: " + e.toString());
                     result.set(e);
                 }
             }
@@ -243,7 +252,7 @@ public class DroidScriptActivity extends Activity
         catch (EcmaError error)
         {
             error.printStackTrace();
-            DroidScript.log("Error in callJsFunction: " + error.toString());
+            Droid.log("Error in callJsFunction: " + error.toString());
             Log.i("JavaScript", "Error on line: " + error.lineNumber() + ": " + error.getLineSource());
             return null;
         }
